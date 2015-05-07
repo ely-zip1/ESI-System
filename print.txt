@@ -1,0 +1,13 @@
+JAY
+04/15/2014								    Extract Sales, Inc.							Page:			1
+08:56:10								  Inventory Transaction
+
+Transaction Type: 	STOCKS LOCATION ENTRY				Source Warehouse:	01(ESI_MAIN)
+Transaction No.:	047024								Source Location:	GD
+Transaction Date:	04/15/2014							Salesman:
+Document No.:		1234								Comment:
+Reason:				UNREGISTERED PO ITEM
+---------------------------------------------------------------------------------------------------------------
+Itemcode	Description								LC	Cases	Pieces		Expiry		UnitPrice		Value
+---------------------------------------------------------------------------------------------------------------
+115101		NTS-DPV BUNDLE PROMO PACK 36X180ML+60ML
