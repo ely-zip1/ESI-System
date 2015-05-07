@@ -119,17 +119,19 @@ namespace InventoryTransactionEntry
                     history.fetch("select max(trans_no) from transaction_entry_history limit 1");
                     if (history.dr.Read())
                     {
-                        if (db.dr[0] == DBNull.Value)
+                        //MessageBox.Show(history.dr[0].ToString());
+
+                        if (history.dr[0] == DBNull.Value)
                         {
                             transaction_no = "1";
                         }
-                        else if (Convert.ToInt32(db.dr[0]).ToString() == "999999")
+                        else if (Convert.ToInt32(history.dr[0]).ToString() == "999999")
                         {
                             transaction_no = "1";
                         }
                         else
                         {
-                            transaction_no = (Convert.ToInt32(db.dr[0]) + 1).ToString();
+                            transaction_no = (Convert.ToInt32(history.dr[0]) + 1).ToString();
                         }
                     }
                 }
@@ -1116,8 +1118,10 @@ namespace InventoryTransactionEntry
         private void getCurrentPurchasePrice()
         {
             db.openConnection();
-            db.fetch("select price_per_piece, str_to_date(effective_from, '%m/%d/%Y') as effDate from price_purchase where pcode = '" + txtItemCode.Text + "' and " +
-                "str_to_date(effective_date, '%m/%d/%Y') = (select max(str_to_date(effective_date, '%m/%d/%Y')) from price_purchase where pcode = '" + txtItemCode.Text + "') limit 1");
+            db.fetch("select price_per_piece, str_to_date(effective_date, '%m/%d/%Y') as effDate from price_purchase " +
+                "where pcode = '" + txtItemCode.Text + "' and " +
+                "str_to_date(effective_date, '%m/%d/%Y') = (select max(str_to_date(effective_date, '%m/%d/%Y')) " +
+                "from price_purchase where pcode = '" + txtItemCode.Text + "') limit 1");
 
             arrPriceType.Clear();
 
@@ -1754,6 +1758,7 @@ namespace InventoryTransactionEntry
             {
                 c.BackColor = Color.DodgerBlue;
             }
+            loader();
         }
 
         #region drag
@@ -1949,6 +1954,7 @@ namespace InventoryTransactionEntry
             post.ShowDialog();
 
             panelMain.Enabled = true;
+            frmInventoryTransactionEntry.ActiveForm.Activate();
         }
 
         private void txtCases_TextChanged(object sender, EventArgs e)
@@ -1959,8 +1965,7 @@ namespace InventoryTransactionEntry
             }
             else if (isValid(txtCases.Text) == false)
             {
-                MessageBox.Show("Invalid Input!");
-                txtCases.Clear();
+                txtCases.Text = "0";
             }
         }
 

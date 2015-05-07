@@ -1,0 +1,15 @@
+create view view_inventory_master as
+
+select m.i_id,
+w.name as Warehouse,
+i.item_code as "Item Code",
+l.location,
+m.i_cases as cases,
+m.i_pieces as pieces,
+m.expiration_date
+
+from inventory_master as m
+join warehouse as w on m.warehouse_code = w.warehouse_id
+join location as l on m.location_link = l.location_id
+join item_master as i on m.item_id_link = i.item_id
+
