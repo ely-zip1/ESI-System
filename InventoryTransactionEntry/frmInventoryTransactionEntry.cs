@@ -33,6 +33,14 @@ namespace InventoryTransactionEntry
         int screenWidth;
         int posted = 0;
         string currentTransNo;
+        string transType = "";
+        bool reload = false;
+        string transNo = "";
+        string[] locationsArray;
+        string srcWH = null;
+        string destWH = null;
+        string srcLocation = null;
+        string destLocation = null;
 
         //string priceCategory = "";
         //string priceEffectivity = "";
@@ -99,6 +107,10 @@ namespace InventoryTransactionEntry
 
         private void loader()
         {
+            btnClose.BackColor = Color.Transparent;
+            btnMaxRes.BackColor = Color.Transparent;
+            btnMinimize.BackColor = Color.Transparent;
+
             currentTransNo = cmbtransno.Text;
             txtItemCode.AutoSize = false;
             this.txtItemCode.Size = new System.Drawing.Size(73, 20);
@@ -205,14 +217,19 @@ namespace InventoryTransactionEntry
             db.dr.Close();
             db.closeConnection();
 
-            //Source Warehouse
+            //Source & Destination Warehouse
             cmbsourceWH.Items.Clear();
             cmbsourceWH.Items.Add("");
+
+            cmbDestWH.Items.Clear();
+            cmbDestWH.Items.Add("");
+
             db.openConnection();
             db.fetch("Select concat_ws(' - ', code, name) from warehouse");
             while (db.dr.Read())
             {
                 cmbsourceWH.Items.Add(db.dr[0].ToString());
+                cmbDestWH.Items.Add(db.dr[0].ToString());
             }
             db.dr.Close();
             db.closeConnection();
@@ -220,6 +237,7 @@ namespace InventoryTransactionEntry
             //Source Location
             cmbsourceLocation.Items.Clear();
             cmbsourceLocation.Items.Add("");
+
             db.openConnection();
             db.fetch("Select concat_ws(' - ',code, location) from location");
             while (db.dr.Read())
@@ -264,6 +282,7 @@ namespace InventoryTransactionEntry
 
             if (cmbtranstype.Text == "AD - ADJUSTMENTS")
             {
+                transType = "adjustments";
                 //Reason Code
                 cmbreasoncode.Items.Clear();
                 cmbreasoncode.Items.Add("");
@@ -282,6 +301,7 @@ namespace InventoryTransactionEntry
             }
             else if (cmbtranstype.Text == "PR - PURCHASE RETURN")
             {
+                transType = "purchase return";
                 //Reason Code
                 cmbreasoncode.Items.Clear();
                 cmbreasoncode.Items.Add("");
@@ -297,6 +317,7 @@ namespace InventoryTransactionEntry
             }
             else if (cmbtranstype.Text == "DS - DIRECT SALES")
             {
+                transType = "direct sales";
                 //Reason Code
                 cmbreasoncode.Items.Clear();
                 cmbreasoncode.Items.Add("");
@@ -312,6 +333,7 @@ namespace InventoryTransactionEntry
             }
             else if (cmbtranstype.Text == "LL - LOCATION TO LOCATION TRANSFER")
             {
+                transType = "location to location transfer";
                 //Reason Code
                 cmbreasoncode.Items.Clear();
                 cmbreasoncode.Items.Add("");
@@ -324,9 +346,12 @@ namespace InventoryTransactionEntry
                 }
                 db.dr.Close();
                 db.closeConnection();
+
+                cmbDestWH.Enabled = false;
             }
             else if (cmbtranstype.Text == "SD - SAMPLE AND DONATION")
             {
+                transType = "sample and donation";
                 //Reason Code
                 cmbreasoncode.Items.Clear();
                 cmbreasoncode.Items.Add("");
@@ -342,6 +367,7 @@ namespace InventoryTransactionEntry
             }
             else if (cmbtranstype.Text == "SL - STOCK LOCATION ENTRY")
             {
+                transType = "stock location entry";
                 //Reason Code
                 cmbreasoncode.Items.Clear();
                 cmbreasoncode.Items.Add("");
@@ -360,6 +386,7 @@ namespace InventoryTransactionEntry
             }
             else if (cmbtranstype.Text == "WW - WAREHOUSE TO WAREHOUSE TRANSFER")
             {
+                transType = "warehouse to warehouse transfer";
                 //Reason Code
                 cmbreasoncode.Items.Clear();
                 cmbreasoncode.Items.Add("");
@@ -378,6 +405,7 @@ namespace InventoryTransactionEntry
 
         private void cmbsourceLocation_SelectedIndexChanged(object sender, EventArgs e)
         {
+            locationsArray = new string[cmbsourceLocation.Items.Count];
             cmbsourceLocation.BackColor = Color.White;
 
             string Location = "";
@@ -393,6 +421,15 @@ namespace InventoryTransactionEntry
             }
             db.dr.Close();
             db.closeConnection();
+
+            if (transType == "location to location transfer")
+            {
+                cmbsourceLocation.Items.CopyTo(locationsArray, 0);
+
+                cmbDestLocation.Items.Clear();
+                cmbDestLocation.Items.AddRange(locationsArray);
+                cmbDestLocation.Items.Remove(cmbsourceLocation.Text);
+            }
 
             //lblsourceSalesman.Text = Location;
         }
@@ -415,7 +452,7 @@ namespace InventoryTransactionEntry
 
         private void btnlineItems_Click(object sender, EventArgs e)
         {
-
+            transNo = cmbtransno.Text;
             string[] excludedFields;
 
             linePrice = 0;
@@ -424,6 +461,11 @@ namespace InventoryTransactionEntry
             {
                 excludedFields = new string[] { "cmbDestWH", "cmbDestLocation", "txtcomment" };
                 blankFieldCheck(excludedFields);
+                lineItems();
+            }
+            else if (cmbtranstype.Text == "LL - LOCATION TO LOCATION TRANSFER")
+            {
+                blankFieldCheck(new string[0]);
                 lineItems();
             }
             else if (cmbtranstype.Text == "")
@@ -470,7 +512,8 @@ namespace InventoryTransactionEntry
                     db.openConnection();
                     db.InUpDel("insert into transaction_entry values(null, '" + cmbtransno.Text + "'," +
                         "(select id from transaction_type where transaction_code = '" + cmbtranstype.Text.Substring(0, 2) + "'), " +
-                        "'" + txtdocumentNo.Text + "', (select str_to_date('" + txttransDate.Text + "','%m/%d/%Y')) , " +
+                        "'" + txtdocumentNo.Text + "', " +
+                        "(select str_to_date('" + txttransDate.Text + "','%m/%d/%Y')) , " +
                         "(select warehouse_id from warehouse where code = '" + cmbsourceWH.Text.Substring(0, 2) + "'), " +
                         "(select location_id from location where code = '" + cmbsourceLocation.Text.Substring(0, 2) + "')," +
                         "null, null, null, null, " +
@@ -496,10 +539,43 @@ namespace InventoryTransactionEntry
 
             foreach (Control c in this.groupBoxTransactionDetails.Controls)
             {
-                for (int counter = 0; counter < excluded.Length; counter++)
+                if (excluded.Count() > 0)
                 {
-                    //MessageBox.Show(excluded.Length.ToString());
-                    if (c.Name != excluded[counter] && c.Text == "" && !(c is Label) && c.Name != "txtcomment")
+                    for (int counter = 0; counter < excluded.Length; counter++)
+                    {
+                        //MessageBox.Show(excluded.Length.ToString());
+                        //Checks if controls are excluded and empty
+                        if (c.Name != excluded[counter] && c.Text == "" && !(c is Label) && c.Name != "txtcomment")
+                        {
+                            x = c.Location.X + c.Width - 3;
+                            y = c.Location.Y;
+
+                            err = new Label();
+                            err.Name = "lbl" + c.Name;
+                            err.Font = new System.Drawing.Font("calibri", 15, FontStyle.Bold);
+                            err.Parent = this;
+                            err.Location = new Point(x, y);
+                            err.Text = "*";//"•";
+                            err.ForeColor = Color.Red;
+                            err.AutoSize = true;
+                            err.Margin = new System.Windows.Forms.Padding(0);
+                            err.Visible = true;
+                            groupBoxTransactionDetails.Controls.Add(err);
+                        }
+                        else
+                        {
+                            if (err.Name == "lbl" + c.Name)
+                            {
+                                err.Dispose();
+                            }
+                            break;
+                        }
+                    }
+                }
+                else
+                {
+                    //Checks if controls are excluded and empty
+                    if (c.Text == "" && !(c is Label) && c.Name != "txtcomment")
                     {
                         x = c.Location.X + c.Width - 3;
                         y = c.Location.Y;
@@ -525,6 +601,7 @@ namespace InventoryTransactionEntry
                         break;
                     }
                 }
+
             }
         }
 
@@ -754,6 +831,7 @@ namespace InventoryTransactionEntry
         {
             int tempPieces = 0;
             int tempCases = 0;
+            bool invalidAdjustment = false;
 
             txtItemCode.Focus();
 
@@ -788,6 +866,9 @@ namespace InventoryTransactionEntry
                     txtPieces.Text = "0";
                 }
 
+                //
+                //checks if item already exists in the current transaction
+                //
                 int dataExists = 0;
                 db.openConnection();
                 db.fetch("select id from view_inventory_dummy where item_code = '" + txtItemCode.Text + "' and transaction = '" + txttransactionNo.Text + "'");
@@ -797,6 +878,27 @@ namespace InventoryTransactionEntry
                 }
                 db.dr.Close();
                 db.closeConnection();
+
+                //
+                //checks if item already exists in the master inventory
+                //
+                if (transType != "stock location entry")
+                {
+                    db.openConnection();
+                    db.fetch("select * from inventory_master where " +
+                        "item_id_link = (select item_code from item_master  where item_id = '" + txtItemCode.Text + "') and " +
+                        "warehouse_code = (select warehouse_id from warehouse where code = '" + txtWHCode.Text + "') and " +
+                        "location_link = (select location_id from location where code = '" + txtLC.Text + "') and " +
+                        "expiration_date = '" + txtexpiry.Text + "'");
+                    if (!db.dr.Read())
+                    {
+                        MessageBox.Show("Transfer/ Adjustment invalid! \n Item does not exist in the inventory.");
+                        invalidAdjustment = true;
+                    }
+                    db.dr.Close();
+                    db.closeConnection();
+                }
+
 
                 tempPieces = Convert.ToInt32(txtPieces.Text);
 
@@ -816,113 +918,117 @@ namespace InventoryTransactionEntry
                     txtCases.Focus();
                 }
 
-                if (dataExists == 0)
+                if (invalidAdjustment)
                 {
-                    lineAmount = Math.Round(((Convert.ToDouble(txtCases.Text) * piecePerUnit) + Convert.ToDouble(txtPieces.Text)) * piecePrice, 2);
-                    //MessageBox.Show("" + piecePrice);
-
-                    ListViewItem lvi = new ListViewItem(txtItemCode.Text);
-                    lvi.SubItems.Add(cmbPT.Text);
-                    lvi.SubItems.Add(txtItemDesc.Text);
-                    lvi.SubItems.Add(txtLC.Text);
-                    lvi.SubItems.Add(txtCases.Text);
-                    lvi.SubItems.Add(txtPieces.Text);
-                    lvi.SubItems.Add(String.Format("{0:0.00}", piecePrice));
-                    lvi.SubItems.Add(String.Format("{0:0.00}", lineAmount));
-                    lvlListItem.Items.Add(lvi);
-
-                    //MessageBox.Show("" + pricetype_date);
-                    string insert = "insert into inventory_dummy values(null, " +
-                        "(select warehouse_id from warehouse where code = '" + txtWHCode.Text + "' ), " +
-                        "(select item_id from item_master where item_code = '" + txtItemCode.Text + "'), " +
-                        "(select location_id from location where code = '" + txtLC.Text + "'), " +
-                        "'" + txtCases.Text + "', " +
-                        "'" + txtPieces.Text + "'," +
-                        "'" + txtexpiry.Text + "', " +
-                        "(select entry_id from transaction_entry where trans_no = '" + cmbtransno.Text + "')," +
-                        "'" + lvi.SubItems[6].Text + "'," +
-                        " '" + lvi.SubItems[7].Text + "',";
-
-                    if (cmbpricecategory.Text == "Selling Price")
+                    if (dataExists == 0)
                     {
-                        insert += "(select s_id from price_selling where (code = '" + txtItemCode.Text + "' and price_type = '" + cmbPT.Text + "') and str_to_date(effective_from, '%m/%d/%Y') = '" + pricetype_date + "'),";
-                        insert += "0)";
-                    }
-                    else if (cmbpricecategory.Text == "Purchase Price")
-                    {
-                        insert += "0,";
-                        insert += "'PL1')";
-                    }
+                        lineAmount = Math.Round(((Convert.ToDouble(txtCases.Text) * piecePerUnit) + Convert.ToDouble(txtPieces.Text)) * piecePrice, 2);
+                        //MessageBox.Show("" + piecePrice);
 
-                    db.openConnection();
-                    db.InUpDel(insert);
-                    db.closeConnection();
-                }
-                else if (dataExists == 1)
-                {
-                    lineAmount = ((Convert.ToDouble(txtCases.Text) * piecePerUnit) + Convert.ToDouble(txtPieces.Text)) * piecePrice;
+                        ListViewItem lvi = new ListViewItem(txtItemCode.Text);
+                        lvi.SubItems.Add(cmbPT.Text);
+                        lvi.SubItems.Add(txtItemDesc.Text);
+                        lvi.SubItems.Add(txtLC.Text);
+                        lvi.SubItems.Add(txtCases.Text);
+                        lvi.SubItems.Add(txtPieces.Text);
+                        lvi.SubItems.Add(String.Format("{0:0.00}", piecePrice));
+                        lvi.SubItems.Add(String.Format("{0:0.00}", lineAmount));
+                        lvlListItem.Items.Add(lvi);
 
-                    //MessageBox.Show("" + piecePrice);
-
-                    DialogResult dialogResult = MessageBox.Show("Same item aleady exists. \nDo you want to replace it?", "Duplicate Entry", MessageBoxButtons.YesNo);
-                    if (dialogResult == DialogResult.Yes)
-                    {
-                        string update = "update inventory_dummy set" +
-                            " warehouse_link = (select warehouse_id from warehouse where code = '" + txtWHCode.Text + "' )," +
-                            "item_link = (select item_id from item_master where item_code = '" + txtItemCode.Text + "'), " +
-                            "location_link = (select location_id from location where code = '" + txtLC.Text + "'), " +
-                            "cases = " + txtCases.Text + ", " +
-                            "pieces = " + txtPieces.Text + "," +
-                            "expiration_date = '" + txtexpiry.Text + "', " +
-                            "transaction_link = (select entry_id from transaction_entry where trans_no = '" + cmbtransno.Text + "')," +
-                            "priceperpiece = '" + piecePrice + "'," +
-                            "linevalue = '" + lineAmount + "',";
-
+                        //MessageBox.Show("" + pricetype_date);
+                        string insert = "insert into inventory_dummy values(null, " +
+                            "(select warehouse_id from warehouse where code = '" + txtWHCode.Text + "' ), " +
+                            "(select item_id from item_master where item_code = '" + txtItemCode.Text + "'), " +
+                            "(select location_id from location where code = '" + txtLC.Text + "'), " +
+                            "'" + txtCases.Text + "', " +
+                            "'" + txtPieces.Text + "'," +
+                            "'" + txtexpiry.Text + "', " +
+                            "(select entry_id from transaction_entry where trans_no = '" + transNo + "')," +
+                            "'" + lvi.SubItems[6].Text + "'," +
+                            " '" + lvi.SubItems[7].Text + "',";
 
                         if (cmbpricecategory.Text == "Selling Price")
                         {
-                            update += "price_selling_link = (select s_id from price_selling where (code = '" + txtItemCode.Text + "' and " +
-                                "price_type = '" + cmbPT.Text + "') and effective_from = '" + pricetype_date + "'), ";
-                            update += "price_purchase_link = 0 ";
-                            update += "where item_link = (select item_id from item_master where item_code = '" + txtItemCode.Text + "') and " +
-                            "transaction_link = (select entry_id from transaction_entry where trans_no = '" + cmbtransno.Text + "')";
+                            insert += "(select s_id from price_selling where (code = '" + txtItemCode.Text + "' and price_type = '" + cmbPT.Text + "') and str_to_date(effective_from, '%m/%d/%Y') = '" + pricetype_date + "'),";
+                            insert += "0)";
                         }
                         else if (cmbpricecategory.Text == "Purchase Price")
                         {
-                            update += "price_selling_link = 0,";
-                            update += "price_purchase_link = 'PL1' ";
-                            update += "where item_link = (select item_id from item_master where item_code = '" + txtItemCode.Text + "') and " +
-                            "transaction_link = (select entry_id from transaction_entry where trans_no = '" + cmbtransno.Text + "')";
+                            insert += "0,";
+                            insert += "'PL1')";
                         }
-
-                        //MessageBox.Show(""+piecePrice);
 
                         db.openConnection();
-                        db.InUpDel(update);
+                        db.InUpDel(insert);
                         db.closeConnection();
+                    }
+                    else if (dataExists == 1)
+                    {
+                        lineAmount = ((Convert.ToDouble(txtCases.Text) * piecePerUnit) + Convert.ToDouble(txtPieces.Text)) * piecePrice;
 
+                        //MessageBox.Show("" + piecePrice);
 
-                        foreach (ListViewItem lvi in this.lvlListItem.Items)
+                        DialogResult dialogResult = MessageBox.Show("Same item aleady exists. \nDo you want to replace it?", "Duplicate Entry", MessageBoxButtons.YesNo);
+                        if (dialogResult == DialogResult.Yes)
                         {
-                            if (lvi.SubItems[0].Text == txtItemCode.Text)
+                            string update = "update inventory_dummy set" +
+                                " warehouse_link = (select warehouse_id from warehouse where code = '" + txtWHCode.Text + "' )," +
+                                "item_link = (select item_id from item_master where item_code = '" + txtItemCode.Text + "'), " +
+                                "location_link = (select location_id from location where code = '" + txtLC.Text + "'), " +
+                                "cases = " + txtCases.Text + ", " +
+                                "pieces = " + txtPieces.Text + "," +
+                                "expiration_date = '" + txtexpiry.Text + "', " +
+                                "transaction_link = (select entry_id from transaction_entry where trans_no = '" + cmbtransno.Text + "')," +
+                                "priceperpiece = '" + piecePrice + "'," +
+                                "linevalue = '" + lineAmount + "',";
+
+
+                            if (cmbpricecategory.Text == "Selling Price")
                             {
-                                lvi.SubItems[0].Text = txtItemCode.Text;
-                                lvi.SubItems[1].Text = cmbPT.Text;
-                                lvi.SubItems[2].Text = txtItemDesc.Text;
-                                lvi.SubItems[3].Text = txtLC.Text;
-                                lvi.SubItems[4].Text = txtCases.Text;
-                                lvi.SubItems[5].Text = txtPieces.Text;
-                                lvi.SubItems[6].Text = String.Format("{0:0.00}", piecePrice);
-                                lvi.SubItems[7].Text = String.Format("{0:0.00}", lineAmount);
-                                break;
+                                update += "price_selling_link = (select s_id from price_selling where (code = '" + txtItemCode.Text + "' and " +
+                                    "price_type = '" + cmbPT.Text + "') and effective_from = '" + pricetype_date + "'), ";
+                                update += "price_purchase_link = 0 ";
+                                update += "where item_link = (select item_id from item_master where item_code = '" + txtItemCode.Text + "') and " +
+                                "transaction_link = (select entry_id from transaction_entry where trans_no = '" + cmbtransno.Text + "')";
+                            }
+                            else if (cmbpricecategory.Text == "Purchase Price")
+                            {
+                                update += "price_selling_link = 0,";
+                                update += "price_purchase_link = 'PL1' ";
+                                update += "where item_link = (select item_id from item_master where item_code = '" + txtItemCode.Text + "') and " +
+                                "transaction_link = (select entry_id from transaction_entry where trans_no = '" + cmbtransno.Text + "')";
+                            }
+
+                            //MessageBox.Show(""+piecePrice);
+
+                            db.openConnection();
+                            db.InUpDel(update);
+                            db.closeConnection();
+
+
+                            foreach (ListViewItem lvi in this.lvlListItem.Items)
+                            {
+                                if (lvi.SubItems[0].Text == txtItemCode.Text)
+                                {
+                                    lvi.SubItems[0].Text = txtItemCode.Text;
+                                    lvi.SubItems[1].Text = cmbPT.Text;
+                                    lvi.SubItems[2].Text = txtItemDesc.Text;
+                                    lvi.SubItems[3].Text = txtLC.Text;
+                                    lvi.SubItems[4].Text = txtCases.Text;
+                                    lvi.SubItems[5].Text = txtPieces.Text;
+                                    lvi.SubItems[6].Text = String.Format("{0:0.00}", piecePrice);
+                                    lvi.SubItems[7].Text = String.Format("{0:0.00}", lineAmount);
+                                    break;
+                                }
                             }
                         }
-                    }
-                    else if (dialogResult == DialogResult.No)
-                    {
-                        //do something else
+                        else if (dialogResult == DialogResult.No)
+                        {
+                            //do something else
+                        }
                     }
                 }
+
 
                 orderAmountSum();
 
@@ -1096,6 +1202,7 @@ namespace InventoryTransactionEntry
             }
         }
 
+        #region PRICING
         private void getCurrentSellingPrice()
         {
             db.openConnection();
@@ -1290,6 +1397,7 @@ namespace InventoryTransactionEntry
                 //MessageBox.Show("" + piecePrice);
             }
         }
+        #endregion
 
         private void groupBoxTransactionDetails_EnabledChanged(object sender, EventArgs e)
         {
@@ -1305,7 +1413,15 @@ namespace InventoryTransactionEntry
 
         private void frmInventoryTransactionEntry_Activated(object sender, EventArgs e)
         {
-            loader();
+            btnClose.BackColor = Color.Transparent;
+            btnMaxRes.BackColor = Color.Transparent;
+            btnMinimize.BackColor = Color.Transparent;
+
+            if (reload)
+            {
+                loader();
+                reload = false;
+            }
         }
 
         private void btnMinimize_Click(object sender, EventArgs e)
@@ -1328,6 +1444,7 @@ namespace InventoryTransactionEntry
             formResize();
         }
 
+        #region form RESIZE
         private void formResize()
         {
             if (this.WindowState == FormWindowState.Normal)
@@ -1369,7 +1486,9 @@ namespace InventoryTransactionEntry
                 pnlControlbox.Location = new Point(this.Width - (pnlControlbox.Width + 10), 0);
             }
         }
+        #endregion
 
+        #region custom BORDER
         private void pnl2_Paint(object sender, PaintEventArgs e)
         {
             if (this.WindowState == FormWindowState.Normal)
@@ -1389,6 +1508,7 @@ namespace InventoryTransactionEntry
                                          Color.Gray, 0, ButtonBorderStyle.Solid);
             }
         }
+        #endregion
 
         private void cmbtransno_SelectedIndexChanged(object sender, EventArgs e)
         {
@@ -1441,15 +1561,11 @@ namespace InventoryTransactionEntry
                         break;
                     case "PR": cmbtranstype.SelectedIndex = 2;
                         break;
-                    case "DS": cmbtranstype.SelectedIndex = 3;
+                    case "LL": cmbtranstype.SelectedIndex = 3;
                         break;
-                    case "LL": cmbtranstype.SelectedIndex = 4;
+                    case "SL": cmbtranstype.SelectedIndex = 4;
                         break;
-                    case "SD": cmbtranstype.SelectedIndex = 5;
-                        break;
-                    case "SL": cmbtranstype.SelectedIndex = 6;
-                        break;
-                    case "WW": cmbtranstype.SelectedIndex = 7;
+                    case "WW": cmbtranstype.SelectedIndex = 5;
                         break;
                     default: cmbtranstype.SelectedIndex = 0;
                         break;
@@ -1722,6 +1838,11 @@ namespace InventoryTransactionEntry
         private void cmbsourceWH_SelectedIndexChanged(object sender, EventArgs e)
         {
             cmbsourceWH.BackColor = Color.White;
+
+            if (transType == "location to location transfer")
+            {
+                cmbDestWH.SelectedIndex = cmbsourceWH.SelectedIndex;
+            }
         }
 
         private void cmbselectprice_SelectedIndexChanged(object sender, EventArgs e)
@@ -1751,14 +1872,20 @@ namespace InventoryTransactionEntry
 
         private void frmInventoryTransactionEntry_Activated_1(object sender, EventArgs e)
         {
+
             lbluser.Text = Variables.userLogged;
             lblWelcome.Visible = true;
             lbluser.Visible = true;
             foreach (Control c in pnlControlbox.Controls)
             {
-                c.BackColor = Color.DodgerBlue;
+                c.BackColor = Color.Transparent;
             }
-            loader();
+
+            if (reload)
+            {
+                loader();
+                reload = false;
+            }
         }
 
         #region drag
@@ -1954,6 +2081,7 @@ namespace InventoryTransactionEntry
             post.ShowDialog();
 
             panelMain.Enabled = true;
+            reload = true;
             frmInventoryTransactionEntry.ActiveForm.Activate();
         }
 
@@ -1965,13 +2093,21 @@ namespace InventoryTransactionEntry
             }
             else if (isValid(txtCases.Text) == false)
             {
-                txtCases.Text = "0";
+                MessageBox.Show("Invalid Input!");
+                txtCases.Clear();
             }
         }
 
-        private static bool isValid(String str)
+        private bool isValid(String str)
         {
-            return Regex.IsMatch(str, @"^[0-9 -]+$");
+            if (transType == "adjustments")
+            {
+                return Regex.IsMatch(str, @"^[0-9 -]+$");
+            }
+            else
+            {
+                return Regex.IsMatch(str, @"^[0-9]+$");
+            }
         }
 
         private void txtPieces_TextChanged(object sender, EventArgs e)
@@ -1985,6 +2121,22 @@ namespace InventoryTransactionEntry
                 MessageBox.Show("Invalid Input!");
                 txtCases.Clear();
             }
+        }
+
+        private void btnClose_MouseHover(object sender, EventArgs e)
+        {
+            btnClose.BackColor = Color.Red;
+        }
+
+        private void btnClose_MouseEnter(object sender, EventArgs e)
+        {
+            btnClose.BackColor = Color.Red;
+        }
+
+        private void btnClose_MouseLeave(object sender, EventArgs e)
+        {
+            btnClose.BackColor = Color.Transparent;
+
         }
 
 

@@ -31,7 +31,6 @@
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(frmInventoryTransactionEntry));
             this.label2 = new System.Windows.Forms.Label();
             this.pnlSL = new System.Windows.Forms.Panel();
-            this.roundButton1 = new RoundButton();
             this.btnprint = new System.Windows.Forms.Button();
             this.pnlItemDetails = new System.Windows.Forms.Panel();
             this.cmbPT = new System.Windows.Forms.ComboBox();
@@ -157,6 +156,7 @@
             this.printPreviewDialog1 = new System.Windows.Forms.PrintPreviewDialog();
             this.backgroundWorker1 = new System.ComponentModel.BackgroundWorker();
             this.panel4 = new System.Windows.Forms.Panel();
+            this.roundButton1 = new RoundButton();
             this.pnlSL.SuspendLayout();
             this.pnlItemDetails.SuspendLayout();
             this.panel3.SuspendLayout();
@@ -224,17 +224,6 @@
             this.pnlSL.Name = "pnlSL";
             this.pnlSL.Size = new System.Drawing.Size(800, 574);
             this.pnlSL.TabIndex = 104;
-            // 
-            // roundButton1
-            // 
-            this.roundButton1.BackgroundImage = global::InventoryTransactionEntry.Properties.Resources.previous21;
-            this.roundButton1.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Zoom;
-            this.roundButton1.Location = new System.Drawing.Point(366, 538);
-            this.roundButton1.Name = "roundButton1";
-            this.roundButton1.Size = new System.Drawing.Size(35, 35);
-            this.roundButton1.TabIndex = 157;
-            this.roundButton1.UseVisualStyleBackColor = true;
-            this.roundButton1.Click += new System.EventHandler(this.roundButton1_Click);
             // 
             // btnprint
             // 
@@ -410,8 +399,8 @@
             // txtItemDesc
             // 
             this.txtItemDesc.BorderStyle = System.Windows.Forms.BorderStyle.None;
-            this.txtItemDesc.Enabled = false;
             this.txtItemDesc.Font = new System.Drawing.Font("Segoe UI Semibold", 14.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtItemDesc.ForeColor = System.Drawing.Color.Black;
             this.txtItemDesc.Location = new System.Drawing.Point(13, 51);
             this.txtItemDesc.Multiline = true;
             this.txtItemDesc.Name = "txtItemDesc";
@@ -1435,6 +1424,7 @@
             // btnClose
             // 
             this.btnClose.Anchor = System.Windows.Forms.AnchorStyles.Right;
+            this.btnClose.BackColor = System.Drawing.Color.Transparent;
             this.btnClose.FlatAppearance.BorderSize = 0;
             this.btnClose.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnClose.Image = global::InventoryTransactionEntry.Properties.Resources.close;
@@ -1442,8 +1432,11 @@
             this.btnClose.Name = "btnClose";
             this.btnClose.Size = new System.Drawing.Size(34, 26);
             this.btnClose.TabIndex = 28;
-            this.btnClose.UseVisualStyleBackColor = true;
+            this.btnClose.UseVisualStyleBackColor = false;
             this.btnClose.Click += new System.EventHandler(this.btnClose_Click);
+            this.btnClose.MouseEnter += new System.EventHandler(this.btnClose_MouseEnter);
+            this.btnClose.MouseLeave += new System.EventHandler(this.btnClose_MouseLeave);
+            this.btnClose.MouseHover += new System.EventHandler(this.btnClose_MouseHover);
             // 
             // btnMaxRes
             // 
@@ -1708,6 +1701,17 @@
             this.panel4.Name = "panel4";
             this.panel4.Size = new System.Drawing.Size(1352, 42);
             this.panel4.TabIndex = 107;
+            // 
+            // roundButton1
+            // 
+            this.roundButton1.BackgroundImage = global::InventoryTransactionEntry.Properties.Resources.previous21;
+            this.roundButton1.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Zoom;
+            this.roundButton1.Location = new System.Drawing.Point(366, 538);
+            this.roundButton1.Name = "roundButton1";
+            this.roundButton1.Size = new System.Drawing.Size(35, 35);
+            this.roundButton1.TabIndex = 157;
+            this.roundButton1.UseVisualStyleBackColor = true;
+            this.roundButton1.Click += new System.EventHandler(this.roundButton1_Click);
             // 
             // frmInventoryTransactionEntry
             // 

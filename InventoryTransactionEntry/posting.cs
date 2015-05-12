@@ -33,6 +33,12 @@ namespace InventoryTransactionEntry
         int totalRows = 0;
         int percentage = 0;
 
+        string srcLocation = "";
+        string destLocation = "";
+        string srcWH = "";
+        string destWH = "";
+        string transType = "";
+
         public posting()
         {
             InitializeComponent();
@@ -220,6 +226,19 @@ namespace InventoryTransactionEntry
                             db.closeConnection();
                             percentage = 100 / totalRows;
                             x++;
+
+                            db.openConnection();
+                            db.fetch("select * from view_transaction_entry where trans_no = '" + transactionEntry[x] + "'");
+                            while (db.dr.Read())
+                            {
+                                destWH = db.dr[9].ToString();
+                                srcWH = db.dr[6].ToString();
+
+                                destLocation = db.dr[10].ToString();
+                                srcLocation = db.dr[7].ToString();
+
+                                transType = db.dr[3].ToString();
+                            }
                         }
                     }
 
@@ -244,6 +263,8 @@ namespace InventoryTransactionEntry
         {
             //MessageBox.Show("Posting...");
             int counter = 0;
+
+
 
             for (int x = 0; x < transactionEntry.GetLength(0); x++)
             {
@@ -277,8 +298,12 @@ namespace InventoryTransactionEntry
                         dbItemMaster.dr.Close();
                         dbItemMaster.closeConnection();
 
-
                         dummyTotalPieces = (casesDummy * piecePerUnit) + piecesDummy;
+
+                        if (transType == "LOCATION TO LOCATION TRANSFER" || transType == "WAREHOUSE TO WAREHOUSE TRANSFER" || transType == "PURCHASE RETURN")
+                        {
+                            dummyTotalPieces *= -1;
+                        }
 
                         casesMaster = Convert.ToInt32(dbIM.dr["i_cases"]);
                         piecesMaster = Convert.ToInt32(dbIM.dr["i_pieces"]);
@@ -313,6 +338,20 @@ namespace InventoryTransactionEntry
                         dbUpdate.openConnection();
                         dbUpdate.InUpDel(updateQuery);
                         dbUpdate.closeConnection();
+
+                        if (transType == "LOCATION TO LOCATION TRANSFER" || transType == "WAREHOUSE TO WAREHOUSE TRANSFER" || transType == "PURCHASE RETURN")
+                        {
+                            Global dbTransfer = new Global();
+                            dbTransfer.openConnection();
+                            dbTransfer.InUpDel("insert into inventory_master values(null, " +
+                                "(select warehouse_id from warehouse where name '" + destWH + "'), " +
+                                "'" + db.dr["item_link"] + "', " +
+                                "(select location_id from location where code = '" + destLocation + "')" +
+                                "'" + db.dr["cases"] + "', " +
+                                "'" + db.dr["pieces"] + "', " +
+                                "'" + db.dr["expiration_date"] + "' " +
+                                ")");
+                        }
 
                         dbUpdate.openConnection();
                         dbUpdate.InUpDel("delete from inventory_dummy where id = '" + db.dr["id"] + "' ");
