@@ -37,10 +37,12 @@ namespace InventoryTransactionEntry
         bool reload = false;
         string transNo = "";
         string[] locationsArray;
+        string[] warehouseArray;
         string srcWH = null;
         string destWH = null;
         string srcLocation = null;
         string destLocation = null;
+        bool emptyField = false;
 
         //string priceCategory = "";
         //string priceEffectivity = "";
@@ -234,15 +236,19 @@ namespace InventoryTransactionEntry
             db.dr.Close();
             db.closeConnection();
 
-            //Source Location
+            //Source and Destination Location
             cmbsourceLocation.Items.Clear();
             cmbsourceLocation.Items.Add("");
+
+            cmbDestLocation.Items.Clear();
+            cmbDestLocation.Items.Add("");
 
             db.openConnection();
             db.fetch("Select concat_ws(' - ',code, location) from location");
             while (db.dr.Read())
             {
                 cmbsourceLocation.Items.Add(db.dr[0].ToString());
+                cmbDestLocation.Items.Add(db.dr[0].ToString());
             }
             db.dr.Close();
             db.closeConnection();
@@ -273,6 +279,35 @@ namespace InventoryTransactionEntry
             cmbreasoncode.SelectedIndex = 0;
         }
 
+        private void cmbtranstype_DropDownClosed(object sender, EventArgs e)
+        {
+            if (cmbtranstype.Text == "AD - ADJUSTMENTS")
+            {
+                cmbDestWH.Enabled = false;
+                cmbDestLocation.Enabled = false;
+            }
+            else if (cmbtranstype.Text == "PR - PURCHASE RETURN")
+            {
+                cmbDestWH.Enabled = false;
+                cmbDestLocation.Enabled = false;
+            }
+            else if (cmbtranstype.Text == "LL - LOCATION TO LOCATION TRANSFER")
+            {
+                cmbDestWH.Enabled = false;
+                cmbDestLocation.Enabled = true;
+            }
+            else if (cmbtranstype.Text == "SL - STOCK LOCATION ENTRY")
+            {
+                cmbDestWH.Enabled = false;
+                cmbDestLocation.Enabled = false;
+            }
+            else if (cmbtranstype.Text == "WW - WAREHOUSE TO WAREHOUSE TRANSFER")
+            {
+                cmbDestWH.Enabled = true;
+                cmbDestLocation.Enabled = true;
+            }
+        }
+
         private void cmbtranstype_SelectedIndexChanged(object sender, EventArgs e)
         {
             cmbtranstype.BackColor = Color.White;
@@ -295,9 +330,6 @@ namespace InventoryTransactionEntry
                 }
                 db.dr.Close();
                 db.closeConnection();
-
-                cmbDestWH.Enabled = false;
-                cmbDestLocation.Enabled = false;
             }
             else if (cmbtranstype.Text == "PR - PURCHASE RETURN")
             {
@@ -315,22 +347,22 @@ namespace InventoryTransactionEntry
                 db.dr.Close();
                 db.closeConnection();
             }
-            else if (cmbtranstype.Text == "DS - DIRECT SALES")
-            {
-                transType = "direct sales";
-                //Reason Code
-                cmbreasoncode.Items.Clear();
-                cmbreasoncode.Items.Add("");
-                db.openConnection();
-                db.fetch("Select concat_ws(' - ',reason_code,reason_description) from reason_code where reason_code like 'DS%'");
-                while (db.dr.Read())
-                {
-                    cmbreasoncode.Items.Add(db.dr[0].ToString());
-                    cmbreasoncode.SelectedIndex = 0;
-                }
-                db.dr.Close();
-                db.closeConnection();
-            }
+            //else if (cmbtranstype.Text == "DS - DIRECT SALES")
+            //{
+            //    transType = "direct sales";
+            //    //Reason Code
+            //    cmbreasoncode.Items.Clear();
+            //    cmbreasoncode.Items.Add("");
+            //    db.openConnection();
+            //    db.fetch("Select concat_ws(' - ',reason_code,reason_description) from reason_code where reason_code like 'DS%'");
+            //    while (db.dr.Read())
+            //    {
+            //        cmbreasoncode.Items.Add(db.dr[0].ToString());
+            //        cmbreasoncode.SelectedIndex = 0;
+            //    }
+            //    db.dr.Close();
+            //    db.closeConnection();
+            //}
             else if (cmbtranstype.Text == "LL - LOCATION TO LOCATION TRANSFER")
             {
                 transType = "location to location transfer";
@@ -347,24 +379,23 @@ namespace InventoryTransactionEntry
                 db.dr.Close();
                 db.closeConnection();
 
-                cmbDestWH.Enabled = false;
             }
-            else if (cmbtranstype.Text == "SD - SAMPLE AND DONATION")
-            {
-                transType = "sample and donation";
-                //Reason Code
-                cmbreasoncode.Items.Clear();
-                cmbreasoncode.Items.Add("");
-                db.openConnection();
-                db.fetch("Select concat_ws(' - ',reason_code,reason_description) from reason_code where reason_code like 'SD%'");
-                while (db.dr.Read())
-                {
-                    cmbreasoncode.Items.Add(db.dr[0].ToString());
-                    cmbreasoncode.SelectedIndex = 0;
-                }
-                db.dr.Close();
-                db.closeConnection();
-            }
+            //else if (cmbtranstype.Text == "SD - SAMPLE AND DONATION")
+            //{
+            //    transType = "sample and donation";
+            //    //Reason Code
+            //    cmbreasoncode.Items.Clear();
+            //    cmbreasoncode.Items.Add("");
+            //    db.openConnection();
+            //    db.fetch("Select concat_ws(' - ',reason_code,reason_description) from reason_code where reason_code like 'SD%'");
+            //    while (db.dr.Read())
+            //    {
+            //        cmbreasoncode.Items.Add(db.dr[0].ToString());
+            //        cmbreasoncode.SelectedIndex = 0;
+            //    }
+            //    db.dr.Close();
+            //    db.closeConnection();
+            //}
             else if (cmbtranstype.Text == "SL - STOCK LOCATION ENTRY")
             {
                 transType = "stock location entry";
@@ -380,9 +411,6 @@ namespace InventoryTransactionEntry
                 }
                 db.dr.Close();
                 db.closeConnection();
-
-                cmbDestWH.Enabled = false;
-                cmbDestLocation.Enabled = false;
             }
             else if (cmbtranstype.Text == "WW - WAREHOUSE TO WAREHOUSE TRANSFER")
             {
@@ -400,7 +428,6 @@ namespace InventoryTransactionEntry
                 db.dr.Close();
                 db.closeConnection();
             }
-
         }
 
         private void cmbsourceLocation_SelectedIndexChanged(object sender, EventArgs e)
@@ -461,12 +488,20 @@ namespace InventoryTransactionEntry
             {
                 excludedFields = new string[] { "cmbDestWH", "cmbDestLocation", "txtcomment" };
                 blankFieldCheck(excludedFields);
-                lineItems();
+                if (!emptyField)
+                {
+                    lineItems();
+                }
+                emptyField = false;
             }
-            else if (cmbtranstype.Text == "LL - LOCATION TO LOCATION TRANSFER")
+            else if (cmbtranstype.Text == "LL - LOCATION TO LOCATION TRANSFER" || cmbtranstype.Text == "WW - WAREHOUSE TO WAREHOUSE TRANSFER")
             {
                 blankFieldCheck(new string[0]);
-                lineItems();
+                if (!emptyField)
+                {
+                    lineItems();
+                }
+                emptyField = false;
             }
             else if (cmbtranstype.Text == "")
             {
@@ -509,6 +544,12 @@ namespace InventoryTransactionEntry
                 }
                 else
                 {
+                    if (transType == "location to location transfer" || transType == "warehouse to warehouse transfer")
+                    {
+                        destWH = cmbDestWH.Text;
+                        destLocation = cmbDestLocation.Text;
+                    }
+
                     db.openConnection();
                     db.InUpDel("insert into transaction_entry values(null, '" + cmbtransno.Text + "'," +
                         "(select id from transaction_type where transaction_code = '" + cmbtranstype.Text.Substring(0, 2) + "'), " +
@@ -516,7 +557,10 @@ namespace InventoryTransactionEntry
                         "(select str_to_date('" + txttransDate.Text + "','%m/%d/%Y')) , " +
                         "(select warehouse_id from warehouse where code = '" + cmbsourceWH.Text.Substring(0, 2) + "'), " +
                         "(select location_id from location where code = '" + cmbsourceLocation.Text.Substring(0, 2) + "')," +
-                        "null, null, null, null, " +
+                        "null, " +
+                        "(select warehouse_id from warehouse where code = '" + destWH.Substring(0, 2) + "'), " +
+                        "(select location_id from location where code = '" + destLocation.Substring(0, 2) + "'), " +
+                        "null, " +
                         "'" + cmbpricecategory.Text + "', " +
                         "'" + cmbselectprice.Text + "', " +
                         "(select reasoncode_id from reason_code where reason_code = '" + cmbreasoncode.Text.Substring(0, 3) + "'), " +
@@ -525,6 +569,9 @@ namespace InventoryTransactionEntry
                         "'" + Variables.userLogged + "')");
                     db.closeConnection();
                 }
+
+                destWH = null;
+                destLocation = null;
 
                 groupBoxTransactionDetails.Enabled = false;
                 pnlSL.Enabled = true;
@@ -537,10 +584,14 @@ namespace InventoryTransactionEntry
             int x;
             int y;
 
+            //MessageBox.Show("Checking empty fields....");
+
             foreach (Control c in this.groupBoxTransactionDetails.Controls)
             {
                 if (excluded.Count() > 0)
                 {
+                    //MessageBox.Show("excluded count > 0....");
+
                     for (int counter = 0; counter < excluded.Length; counter++)
                     {
                         //MessageBox.Show(excluded.Length.ToString());
@@ -561,6 +612,7 @@ namespace InventoryTransactionEntry
                             err.Margin = new System.Windows.Forms.Padding(0);
                             err.Visible = true;
                             groupBoxTransactionDetails.Controls.Add(err);
+                            emptyField = true;
                         }
                         else
                         {
@@ -574,9 +626,12 @@ namespace InventoryTransactionEntry
                 }
                 else
                 {
+                    //MessageBox.Show("excluded count == 0....");
                     //Checks if controls are excluded and empty
-                    if (c.Text == "" && !(c is Label) && c.Name != "txtcomment")
+                    if (c.Text.Replace(" ", string.Empty) == "" && !(c is Label) && c.Name != "txtcomment")
                     {
+                        //MessageBox.Show("Checks if controls are excluded and empty....");
+
                         x = c.Location.X + c.Width - 3;
                         y = c.Location.Y;
 
@@ -591,6 +646,7 @@ namespace InventoryTransactionEntry
                         err.Margin = new System.Windows.Forms.Padding(0);
                         err.Visible = true;
                         groupBoxTransactionDetails.Controls.Add(err);
+                        emptyField = true;
                     }
                     else
                     {
@@ -598,7 +654,7 @@ namespace InventoryTransactionEntry
                         {
                             err.Dispose();
                         }
-                        break;
+                        //break;
                     }
                 }
 
@@ -886,7 +942,7 @@ namespace InventoryTransactionEntry
                 {
                     db.openConnection();
                     db.fetch("select * from inventory_master where " +
-                        "item_id_link = (select item_code from item_master  where item_id = '" + txtItemCode.Text + "') and " +
+                        "item_id_link = (select item_id from item_master  where item_code = '" + txtItemCode.Text + "') and " +
                         "warehouse_code = (select warehouse_id from warehouse where code = '" + txtWHCode.Text + "') and " +
                         "location_link = (select location_id from location where code = '" + txtLC.Text + "') and " +
                         "expiration_date = '" + txtexpiry.Text + "'");
@@ -918,7 +974,7 @@ namespace InventoryTransactionEntry
                     txtCases.Focus();
                 }
 
-                if (invalidAdjustment)
+                if (!invalidAdjustment)
                 {
                     if (dataExists == 0)
                     {
@@ -1515,9 +1571,18 @@ namespace InventoryTransactionEntry
             string transType = "";
             string sWH = "";
             string sLoc = "";
+            string dLoc = "";
             string priceCat = "";
             string priceType = "";
             string reason = "";
+
+            foreach (Control err in this.groupBoxTransactionDetails.Controls)
+            {
+                if (err is Label && err.Text == "*")
+                {
+                    err.Dispose();
+                }
+            }
 
             Global transCheck = new Global();
             transCheck.openConnection();
@@ -1631,6 +1696,36 @@ namespace InventoryTransactionEntry
             db.dr.Close();
             db.closeConnection();
 
+            //destination warehouse
+            db.openConnection();
+            db.fetch("select destination_warehouse from view_transaction_entry where  trans_no = '" + cmbtransno.Text + "'");
+            if (db.dr.Read())
+            {
+
+                sWH = db.dr["destination_warehouse"].ToString();
+                switch (sWH)
+                {
+                    case "ESI_MAIN": cmbDestWH.SelectedIndex = 1;
+                        break;
+                    case "ESI_OZAMIZ": cmbDestWH.SelectedIndex = 2;
+                        break;
+                    case "ESI_BUTUAN": cmbDestWH.SelectedIndex = 3;
+                        break;
+                    case "ESI_BUKIDNON": cmbDestWH.SelectedIndex = 4;
+                        break;
+                    case "ESI_ILIGAN": cmbDestWH.SelectedIndex = 5;
+                        break;
+                    default: cmbDestWH.SelectedIndex = 0;
+                        break;
+                }
+            }
+            else
+            {
+                cmbDestWH.SelectedIndex = 0;
+            }
+            db.dr.Close();
+            db.closeConnection();
+
             //source location
             db.openConnection();
             db.fetch("select source_location from view_transaction_entry where  trans_no = '" + cmbtransno.Text + "'");
@@ -1681,6 +1776,28 @@ namespace InventoryTransactionEntry
             {
                 cmbsourceLocation.SelectedIndex = 0;
             }
+            db.dr.Close();
+            db.closeConnection();
+
+            //destination location
+            db.openConnection();
+            db.fetch("select destination_location from view_transaction_entry where  trans_no = '" + cmbtransno.Text + "'");
+            if (db.dr.Read())
+            {
+                sLoc = db.dr["destination_location"].ToString();
+
+                Global dbLocation = new Global();
+                dbLocation.openConnection();
+                dbLocation.fetch("select concat_ws(' - ', code, location) as destLocation from location where code = '" + sLoc + "'");
+                if (dbLocation.dr.Read())
+                {
+                    dLoc = dbLocation.dr["destLocation"].ToString();
+                    cmbDestLocation.SelectedIndex = cmbDestLocation.FindString(dLoc);
+                }
+                dbLocation.dr.Close();
+                dbLocation.closeConnection();
+            }
+
             db.dr.Close();
             db.closeConnection();
 
@@ -1838,10 +1955,19 @@ namespace InventoryTransactionEntry
         private void cmbsourceWH_SelectedIndexChanged(object sender, EventArgs e)
         {
             cmbsourceWH.BackColor = Color.White;
+            warehouseArray = new string[cmbsourceWH.Items.Count];
 
             if (transType == "location to location transfer")
             {
                 cmbDestWH.SelectedIndex = cmbsourceWH.SelectedIndex;
+            }
+            else if (transType == "warehouse to warehouse transfer")
+            {
+                cmbsourceWH.Items.CopyTo(warehouseArray, 0);
+
+                cmbDestWH.Items.Clear();
+                cmbDestWH.Items.AddRange(warehouseArray);
+                cmbDestWH.Items.Remove(cmbsourceWH.Text);
             }
         }
 
@@ -1912,7 +2038,7 @@ namespace InventoryTransactionEntry
 
         private void roundButton1_Click(object sender, EventArgs e)
         {
-            loader();
+            //loader();
 
             cmbtransno.SelectedIndex = cmbtransno.Items.IndexOf(currentTransNo);
 
@@ -2138,6 +2264,8 @@ namespace InventoryTransactionEntry
             btnClose.BackColor = Color.Transparent;
 
         }
+
+
 
 
 

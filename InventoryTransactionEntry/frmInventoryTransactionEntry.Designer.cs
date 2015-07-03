@@ -31,6 +31,7 @@
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(frmInventoryTransactionEntry));
             this.label2 = new System.Windows.Forms.Label();
             this.pnlSL = new System.Windows.Forms.Panel();
+            this.roundButton1 = new RoundButton();
             this.btnprint = new System.Windows.Forms.Button();
             this.pnlItemDetails = new System.Windows.Forms.Panel();
             this.cmbPT = new System.Windows.Forms.ComboBox();
@@ -156,7 +157,6 @@
             this.printPreviewDialog1 = new System.Windows.Forms.PrintPreviewDialog();
             this.backgroundWorker1 = new System.ComponentModel.BackgroundWorker();
             this.panel4 = new System.Windows.Forms.Panel();
-            this.roundButton1 = new RoundButton();
             this.pnlSL.SuspendLayout();
             this.pnlItemDetails.SuspendLayout();
             this.panel3.SuspendLayout();
@@ -224,6 +224,17 @@
             this.pnlSL.Name = "pnlSL";
             this.pnlSL.Size = new System.Drawing.Size(800, 574);
             this.pnlSL.TabIndex = 104;
+            // 
+            // roundButton1
+            // 
+            this.roundButton1.BackgroundImage = global::InventoryTransactionEntry.Properties.Resources.previous21;
+            this.roundButton1.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Zoom;
+            this.roundButton1.Location = new System.Drawing.Point(366, 538);
+            this.roundButton1.Name = "roundButton1";
+            this.roundButton1.Size = new System.Drawing.Size(35, 35);
+            this.roundButton1.TabIndex = 157;
+            this.roundButton1.UseVisualStyleBackColor = true;
+            this.roundButton1.Click += new System.EventHandler(this.roundButton1_Click);
             // 
             // btnprint
             // 
@@ -1214,6 +1225,7 @@
             this.cmbtranstype.Size = new System.Drawing.Size(288, 21);
             this.cmbtranstype.TabIndex = 2;
             this.cmbtranstype.SelectedIndexChanged += new System.EventHandler(this.cmbtranstype_SelectedIndexChanged);
+            this.cmbtranstype.DropDownClosed += new System.EventHandler(this.cmbtranstype_DropDownClosed);
             // 
             // cmbDestLocation
             // 
@@ -1389,6 +1401,7 @@
             // 
             // panel2
             // 
+            this.panel2.BackColor = System.Drawing.Color.Transparent;
             this.panel2.BackgroundImage = global::InventoryTransactionEntry.Properties.Resources.ESI_icon;
             this.panel2.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Zoom;
             this.panel2.Location = new System.Drawing.Point(12, 3);
@@ -1701,17 +1714,6 @@
             this.panel4.Name = "panel4";
             this.panel4.Size = new System.Drawing.Size(1352, 42);
             this.panel4.TabIndex = 107;
-            // 
-            // roundButton1
-            // 
-            this.roundButton1.BackgroundImage = global::InventoryTransactionEntry.Properties.Resources.previous21;
-            this.roundButton1.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Zoom;
-            this.roundButton1.Location = new System.Drawing.Point(366, 538);
-            this.roundButton1.Name = "roundButton1";
-            this.roundButton1.Size = new System.Drawing.Size(35, 35);
-            this.roundButton1.TabIndex = 157;
-            this.roundButton1.UseVisualStyleBackColor = true;
-            this.roundButton1.Click += new System.EventHandler(this.roundButton1_Click);
             // 
             // frmInventoryTransactionEntry
             // 

@@ -225,7 +225,6 @@ namespace InventoryTransactionEntry
                             db.dr.Close();
                             db.closeConnection();
                             percentage = 100 / totalRows;
-                            x++;
 
                             db.openConnection();
                             db.fetch("select * from view_transaction_entry where trans_no = '" + transactionEntry[x] + "'");
@@ -239,6 +238,10 @@ namespace InventoryTransactionEntry
 
                                 transType = db.dr[3].ToString();
                             }
+                            db.dr.Close();
+                            db.closeConnection();
+
+                            x++;
                         }
                     }
 
@@ -344,9 +347,9 @@ namespace InventoryTransactionEntry
                             Global dbTransfer = new Global();
                             dbTransfer.openConnection();
                             dbTransfer.InUpDel("insert into inventory_master values(null, " +
-                                "(select warehouse_id from warehouse where name '" + destWH + "'), " +
+                                "(select warehouse_id from warehouse where name = '" + destWH + "'), " +
                                 "'" + db.dr["item_link"] + "', " +
-                                "(select location_id from location where code = '" + destLocation + "')" +
+                                "(select location_id from location where code = '" + destLocation + "'), " +
                                 "'" + db.dr["cases"] + "', " +
                                 "'" + db.dr["pieces"] + "', " +
                                 "'" + db.dr["expiration_date"] + "' " +
